@@ -31,3 +31,91 @@ function typeText(element, text) {
     }, 20);
 }
 
+function typeText(element, text) {
+    let index = 0;
+    const interval = setInterval(() => {
+        if (index < text.length) {
+            element.innerHTML += text.charAt(index);
+            index++;
+        } else {
+            clearInterval(interval);
+        }
+    }, 20);
+}
+
+generateUniqueId = () => {
+    const timestamp = Date.now();
+    const randomNumber = Math.random();
+    const hexadecimalString = randomNumber.toString(16);
+
+    return `id-${timestamp}-${hexadecimalString}`;
+}
+function chatStripe(isAi, value, uniqueId) {    
+    return (
+        `
+        <div class="wrapper ${isAi && 'ai'}">
+            <div class="chat">
+                <div class="profile">
+                    <img 
+                        src="${isAi ? bot : user}" 
+                        alt="${isAi ? 'bot' : 'user'}" 
+                    />
+                </div>
+                <div class="message" id=${uniqueId}>${value}</div>
+            </div>
+        </div>
+    `
+    )
+}
+
+function handleSubmit(e) {
+
+    e.preventDefault();
+
+    const data = new FormData(form);
+
+    // user's chatstripe
+    chatContainer.innerHTML += chatStripe(false, data.get('prompt'));
+
+    form.reset();
+
+    // bot's chatstripe
+    const uniqueId = generateUniqueId();
+    chatContainer.innerHTML += chatStripe(true, " ", uniqueId);
+
+    // to focus scroll to the bottom
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    // specific message div
+    const messageDiv = document.getElementById(uniqueId);
+    loader(messageDiv);
+
+    // fetch data from server -> bot's response
+    const response =  fetch('https://codex-gpt4.huggingface.co/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${import.meta.env.VITE_HUGGINGFACE_API_KEY}`
+        },
+        body: JSON.stringify({
+            inputs: {
+                text: data.get('prompt')
+            }
+        })
+    });
+
+    clearInterval(loadInterval);
+    messageDiv.innerHTML = " ";
+
+    if (response.ok) {
+        const data =  response.json();
+        const parsedData = data.generated_text; // Assuming the API returns an object with a 'generated_text' property
+
+        typeText(messageDiv, parsedData);
+    } else {
+        const err =  response.text();
+        messageDiv.innerHTML = "Something went wrong";
+        alert(err);
+    }
+}
+

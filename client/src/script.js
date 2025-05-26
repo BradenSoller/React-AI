@@ -19,17 +19,6 @@ function loader(element) {
 }
 
 
-function typeText(element, text) {
-    let index = 0;
-    const interval = setInterval(() => {
-        if (index < text.length) {
-            element.innerHTML += text.charAt(index);
-            index++;
-        } else {
-            clearInterval(interval);
-        }
-    }, 20);
-}
 
 function typeText(element, text) {
     let index = 0;
@@ -43,7 +32,7 @@ function typeText(element, text) {
     }, 20);
 }
 
-generateUniqueId = () => {
+let generateUniqueId = () => {
     const timestamp = Date.now();
     const randomNumber = Math.random();
     const hexadecimalString = randomNumber.toString(16);
@@ -91,31 +80,15 @@ function handleSubmit(e) {
     loader(messageDiv);
 
     // fetch data from server -> bot's response
-    const response =  fetch('https://codex-gpt4.huggingface.co/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${import.meta.env.VITE_HUGGINGFACE_API_KEY}`
-        },
-        body: JSON.stringify({
-            inputs: {
-                text: data.get('prompt')
-            }
-        })
-    });
 
-    clearInterval(loadInterval);
-    messageDiv.innerHTML = " ";
-
-    if (response.ok) {
-        const data =  response.json();
-        const parsedData = data.generated_text; // Assuming the API returns an object with a 'generated_text' property
-
-        typeText(messageDiv, parsedData);
-    } else {
-        const err =  response.text();
-        messageDiv.innerHTML = "Something went wrong";
-        alert(err);
     }
-}
+
+  
+
+form.addEventListener('submit', handleSubmit);
+form.addEventListener('keyup', (e) => {
+    if (e.keyCode === 13) {
+        handleSubmit(e);
+    }
+});     
 
